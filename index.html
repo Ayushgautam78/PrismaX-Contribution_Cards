@@ -2910,6 +2910,43 @@
       cpGo = false; cpCtx = null; initCP(tier);
     }
 
+    // Helper: embed Google Fonts as inline base64 so dom-to-image-more can use them
+    let fontsEmbedded = false;
+    async function embedGoogleFonts() {
+      if (fontsEmbedded) return;
+      try {
+        const linkEl = document.querySelector('link[href*="fonts.googleapis.com"]');
+        if (!linkEl) return;
+        // Fetch the CSS with a user-agent that returns woff2
+        const cssResp = await fetch(linkEl.href, {
+          headers: { 'User-Agent': navigator.userAgent }
+        });
+        let cssText = await cssResp.text();
+        // Find all url() references and convert to data URLs
+        const urlRegex = /url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g;
+        const matches = [...cssText.matchAll(urlRegex)];
+        for (const match of matches) {
+          try {
+            const fontResp = await fetch(match[1]);
+            const fontBlob = await fontResp.blob();
+            const dataUrl = await new Promise(resolve => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.readAsDataURL(fontBlob);
+            });
+            cssText = cssText.replace(match[1], dataUrl);
+          } catch(e) { /* skip this font file */ }
+        }
+        const style = document.createElement('style');
+        style.id = 'embedded-fonts';
+        style.textContent = cssText;
+        document.head.appendChild(style);
+        fontsEmbedded = true;
+      } catch(e) {
+        console.warn('Font embedding failed:', e);
+      }
+    }
+
     // Helper: convert an external image to a data URL to avoid CORS issues
     function imgToDataUrl(imgEl) {
       return new Promise((resolve) => {
@@ -2934,6 +2971,9 @@
       // === dom-to-image-more approach ===
       // This library properly inlines all computed CSS styles, fixing
       // gradient/color rendering issues that plagued html2canvas.
+
+      // Embed Google Fonts as inline base64 (first call only, cached after)
+      await embedGoogleFonts();
 
       const card = document.getElementById('the-card');
       const scene = card.closest('.card-scene');
