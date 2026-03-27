@@ -3008,11 +3008,15 @@
       await new Promise(r => setTimeout(r, 200));
 
       try {
+        const scale = 2;
+        const w = card.offsetWidth;
+        const h = card.offsetHeight;
         const blob = await domtoimage.toBlob(card, {
-          width: card.offsetWidth,
-          height: card.offsetHeight,
+          width: w * scale,
+          height: h * scale,
           style: {
-            transform: 'none',
+            transform: 'scale(' + scale + ')',
+            transformOrigin: 'top left',
             transformStyle: 'flat',
             animation: 'none',
             transition: 'none'
