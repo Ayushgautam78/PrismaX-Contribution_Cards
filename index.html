@@ -2544,7 +2544,7 @@
 
       <div class="instr-step">
         <div class="instr-num">①</div>
-        <div class="instr-text"><strong>Answer 9 quick questions</strong> about your PrismaX journey — your role,
+        <div class="instr-text"><strong>Answer 9 quick questions</strong> about your PrismaX journey: your role,
           activity, and how long you've been part of the community.</div>
       </div>
       <div class="instr-step">
@@ -2554,7 +2554,7 @@
       </div>
       <div class="instr-step">
         <div class="instr-num">③</div>
-        <div class="instr-text"><strong>Your card is generated</strong> — a unique FIFA-style operator identity card
+        <div class="instr-text"><strong>Your card is generated</strong>: a unique FIFA-style operator identity card
           matching your tier. Higher tiers unlock rarer card designs.</div>
       </div>
       <div class="instr-step">
@@ -2650,13 +2650,13 @@
           <div class="card-header">
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <img src="logo-prismax-02.png"
-                style="height: 24px; object-fit: contain; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));"
+                style="height: 38px; object-fit: contain; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); margin-bottom: -4px;"
                 alt="PrismaX">
               <div class="card-brand-lbl" id="ct-tier">Operator</div>
             </div>
             <div class="score-wrap">
               <div class="score-big" id="ct-score">0</div>
-              <div class="score-lbl">Operator Score</div>
+              <div class="score-lbl">Contribution Score</div>
             </div>
           </div>
           <div class="card-avatar-wrap">
@@ -2880,6 +2880,7 @@
       if (photo) { document.getElementById('ct-img').src = photo; document.getElementById('ct-img').style.display = 'block'; document.getElementById('ct-def').style.display = 'none'; }
       document.getElementById('ct-tier').textContent = tier.toUpperCase();
       document.getElementById('ct-score').textContent = sc;
+      document.getElementById('ct-name').textContent = ans.name || 'Operator';
       const xSvg = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;margin-bottom:2px;display:inline-block;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`;
       const dcSvg = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;margin-bottom:2px;display:inline-block;"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>`;
       document.getElementById('ct-x').innerHTML = `${xSvg}@${(ans.xuser || '').replace('@', '')}`;
@@ -2901,7 +2902,7 @@
         { n: 'Contributions', v: fmt(ans.posts || 0) + ' posts', p: Math.min(100, (ans.posts / 250) * 100) },
         { n: 'Points', v: fmt(ans.points || 0) + ' pts', p: Math.min(100, (ans.points / 100000) * 100) },
         { n: 'Event Attendance', v: ev, p: ep },
-        { n: 'Operator Score', v: sc + '/100', p: sc },
+        { n: 'Contribution Score', v: sc + '/100', p: sc },
       ].map(s => `<div class="stat-row"><div class="stat-hd"><span class="stat-n">${s.n}</span><span class="stat-v">${s.v}</span></div><div class="stat-bg"><div class="stat-fill" data-p="${s.p}" style="width:0%"></div></div></div>`).join('');
       setTimeout(() => document.querySelectorAll('.stat-fill').forEach(b => b.style.width = b.dataset.p + '%'), 700);
       if (tier === 'groundbreaker') { const cr = document.createElement('div'); cr.className = 'gb-crown'; cr.textContent = '👑'; document.getElementById('card-face').appendChild(cr); }
@@ -2935,8 +2936,7 @@
             const score = document.getElementById('ct-score').textContent || '0';
             const name = ans.name || 'an Operator';
             const text = 'I just got my PrismaX Operator Identity Card ' + String.fromCodePoint(0x1F916) + String.fromCodePoint(0x26A1) + '\n\nName: ' + name + '\nRole: ' + role + '\nScore: ' + score + ' out of 100\n\nGo check yours out too\nMade by @ayushgautam174 ' + String.fromCodePoint(0x1F525) + '\n\n@prismaXai';
-            const quoteUrl = 'https://x.com/prismaXai';
-            const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(quoteUrl);
+            const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
             window.open(url, '_blank');
           }, 600);
         });
