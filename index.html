@@ -1730,15 +1730,16 @@
 
     .card-bottom {
       position: absolute;
-      bottom: 0;
+      bottom: 6px;
       left: 0;
       right: 0;
-      padding: 10px 20px;
+      padding: 10px 40px;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      z-index: 5;
+      gap: 4px;
     }
+
 
     .card-join {
       font-family: 'Orbitron', sans-serif;
@@ -2703,7 +2704,7 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.4.5/dist/dom-to-image-more.min.js"></script>
   <script>
     // SOUNDS
     let actx;
@@ -2909,38 +2910,161 @@
       cpGo = false; cpCtx = null; initCP(tier);
     }
 
-    function generateCardImage(cb) {
-      const c = document.getElementById('the-card');
-      const oldTrans = c.style.transform, oldAnim = c.style.animation;
-      const holo = c.querySelector('.holo'), shine = c.querySelector('.shine');
-      const oldHolo = holo ? holo.style.opacity : '', oldShine = shine ? shine.style.opacity : '';
-      c.style.transform = 'translateZ(0) scale(1)'; c.style.animation = 'none';
-      if(holo) holo.style.opacity = '0';
-      if(shine) shine.style.opacity = '0';
-      setTimeout(() => {
-        html2canvas(c, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: false, logging: false, scrollX: 0, scrollY: -window.scrollY }).then(cv => {
-          c.style.transform = oldTrans; c.style.animation = oldAnim;
-          if(holo) holo.style.opacity = oldHolo;
-          if(shine) shine.style.opacity = oldShine;
-          cb(cv.toDataURL('image/png'));
-        }).catch(err => {
-          c.style.transform = oldTrans; c.style.animation = oldAnim;
-          if(holo) holo.style.opacity = oldHolo;
-          if(shine) shine.style.opacity = oldShine;
-          console.error('Canvas error:', err);
-        });
-      }, 250);
+    // Helper: convert an external image to a data URL to avoid CORS issues
+    function imgToDataUrl(imgEl) {
+      return new Promise((resolve) => {
+        if (!imgEl || !imgEl.src || imgEl.src.startsWith('data:')) { resolve(); return; }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          try {
+            const c = document.createElement('canvas');
+            c.width = img.naturalWidth; c.height = img.naturalHeight;
+            c.getContext('2d').drawImage(img, 0, 0);
+            imgEl.src = c.toDataURL('image/png');
+          } catch(e) { /* CORS failed, keep original */ }
+          resolve();
+        };
+        img.onerror = function() { resolve(); };
+        img.src = imgEl.src;
+      });
     }
+
+    async function generateCardImage(cb) {
+      // === dom-to-image-more approach ===
+      // This library properly inlines all computed CSS styles, fixing
+      // gradient/color rendering issues that plagued html2canvas.
+
+      const card = document.getElementById('the-card');
+      const scene = card.closest('.card-scene');
+
+      // Save styles we need to temporarily modify on the LIVE card
+      const saved = {
+        cardTransform: card.style.transform,
+        cardTransformStyle: card.style.transformStyle,
+        cardAnimation: card.style.animation,
+        cardTransition: card.style.transition,
+        scenePerspective: scene ? scene.style.perspective : '',
+      };
+
+      // Flatten 3D context on the live card temporarily
+      if (scene) scene.style.perspective = 'none';
+      card.style.transform = 'none';
+      card.style.transformStyle = 'flat';
+      card.style.animation = 'none';
+      card.style.transition = 'none';
+
+      // Hide problematic elements
+      const holo = card.querySelector('.holo');
+      const shine = card.querySelector('.shine');
+      const particles = card.querySelector('#card-particles');
+      const mascot = card.querySelector('.card-mascot');
+      const gbCrown = card.querySelector('.gb-crown');
+
+      const savedEls = {
+        holoDisplay: holo ? holo.style.display : '',
+        shineDisplay: shine ? shine.style.display : '',
+        particlesDisplay: particles ? particles.style.display : '',
+        mascotAnim: mascot ? mascot.style.animation : '',
+        gbCrownAnim: gbCrown ? gbCrown.style.animation : '',
+      };
+
+      if (holo) holo.style.display = 'none';
+      if (shine) shine.style.display = 'none';
+      if (particles) particles.style.display = 'none';
+      if (mascot) mascot.style.animation = 'none';
+      if (gbCrown) gbCrown.style.animation = 'none';
+
+      // Force stat bars to target widths
+      const statBars = card.querySelectorAll('.stat-fill');
+      statBars.forEach(bar => {
+        if (bar.dataset.p) {
+          bar.style.transition = 'none';
+          bar.style.width = bar.dataset.p + '%';
+        }
+      });
+
+      // Convert external flag images to data URLs to avoid CORS
+      const flagImgs = card.querySelectorAll('#ct-flag img');
+      for (const fi of flagImgs) {
+        await imgToDataUrl(fi);
+      }
+
+      function restoreStyles() {
+        if (scene) scene.style.perspective = saved.scenePerspective;
+        card.style.transform = saved.cardTransform;
+        card.style.transformStyle = saved.cardTransformStyle;
+        card.style.animation = saved.cardAnimation;
+        card.style.transition = saved.cardTransition;
+        if (holo) holo.style.display = savedEls.holoDisplay;
+        if (shine) shine.style.display = savedEls.shineDisplay;
+        if (particles) particles.style.display = savedEls.particlesDisplay;
+        if (mascot) mascot.style.animation = savedEls.mascotAnim;
+        if (gbCrown) gbCrown.style.animation = savedEls.gbCrownAnim;
+        statBars.forEach(bar => { bar.style.transition = ''; });
+      }
+
+      // Small delay for style changes to apply
+      await new Promise(r => setTimeout(r, 200));
+
+      try {
+        const blob = await domtoimage.toBlob(card, {
+          width: card.offsetWidth,
+          height: card.offsetHeight,
+          style: {
+            transform: 'none',
+            transformStyle: 'flat',
+            animation: 'none',
+            transition: 'none'
+          },
+          filter: (node) => {
+            // Exclude canvas particles, holo, and shine
+            if (node.classList) {
+              if (node.classList.contains('holo')) return false;
+              if (node.classList.contains('shine')) return false;
+              if (node.id === 'card-particles') return false;
+            }
+            return true;
+          }
+        });
+        restoreStyles();
+        cb(blob);
+      } catch(err) {
+        restoreStyles();
+        console.error('Snapshot failed:', err);
+        alert('Card download failed. Please try taking a screenshot instead.');
+      }
+    }
+
+    function triggerDownload(blobOrDataUrl) {
+      const fileName = `PrismaX_${(ans.name || 'Operator').replace(/\s+/g, '_')}_Card.png`;
+      const a = document.createElement('a');
+      a.download = fileName;
+      if (blobOrDataUrl instanceof Blob) {
+        const url = URL.createObjectURL(blobOrDataUrl);
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      } else {
+        a.href = blobOrDataUrl;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    }
+
     function downloadCard() {
       playClick(880, .12);
-      generateCardImage(dataUrl => {
-        const a = document.createElement('a'); a.download = `PrismaX_${(ans.name || 'Operator').replace(/\s+/g, '_')}_Card.png`; a.href = dataUrl; a.click();
+      generateCardImage(blobOrDataUrl => {
+        triggerDownload(blobOrDataUrl);
       });
     }
     function shareOnX() {
       playClick(660, .1);
-      generateCardImage(dataUrl => {
-        const a = document.createElement('a'); a.download = `PrismaX_${(ans.name || 'Operator').replace(/\s+/g, '_')}_Card.png`; a.href = dataUrl; a.click();
+      generateCardImage(blobOrDataUrl => {
+        triggerDownload(blobOrDataUrl);
         setTimeout(() => {
           const role = (ans.role || 'operator').charAt(0).toUpperCase() + (ans.role || 'operator').slice(1);
           const score = document.getElementById('ct-score').textContent || '0';
