@@ -2909,38 +2909,47 @@
       cpGo = false; cpCtx = null; initCP(tier);
     }
 
+    function generateCardImage(cb) {
+      const c = document.getElementById('the-card');
+      const oldTrans = c.style.transform, oldAnim = c.style.animation;
+      const holo = c.querySelector('.holo'), shine = c.querySelector('.shine');
+      const oldHolo = holo ? holo.style.opacity : '', oldShine = shine ? shine.style.opacity : '';
+      c.style.transform = 'translateZ(0) scale(1)'; c.style.animation = 'none';
+      if(holo) holo.style.opacity = '0';
+      if(shine) shine.style.opacity = '0';
+      setTimeout(() => {
+        html2canvas(c, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: false, logging: false, scrollX: 0, scrollY: -window.scrollY }).then(cv => {
+          c.style.transform = oldTrans; c.style.animation = oldAnim;
+          if(holo) holo.style.opacity = oldHolo;
+          if(shine) shine.style.opacity = oldShine;
+          cb(cv.toDataURL('image/png'));
+        }).catch(err => {
+          c.style.transform = oldTrans; c.style.animation = oldAnim;
+          if(holo) holo.style.opacity = oldHolo;
+          if(shine) shine.style.opacity = oldShine;
+          console.error('Canvas error:', err);
+        });
+      }, 250);
+    }
     function downloadCard() {
       playClick(880, .12);
-      const c = document.getElementById('the-card'); c.style.transform = 'none'; c.style.animation = 'none';
-      setTimeout(() => {
-        html2canvas(c, { scale: 3, backgroundColor: null, useCORS: true, allowTaint: true, logging: false }).then(cv => {
-          const a = document.createElement('a'); a.download = `PrismaX_${(ans.name || 'Operator').replace(/\s+/g, '_')}_Card.png`; a.href = cv.toDataURL('image/png'); a.click(); c.style.transform = ''; c.style.animation = '';
-        });
-      }, 200);
+      generateCardImage(dataUrl => {
+        const a = document.createElement('a'); a.download = `PrismaX_${(ans.name || 'Operator').replace(/\s+/g, '_')}_Card.png`; a.href = dataUrl; a.click();
+      });
     }
     function shareOnX() {
       playClick(660, .1);
-      // First download the card
-      const c = document.getElementById('the-card');
-      const origTransform = c.style.transform; const origAnim = c.style.animation;
-      c.style.transform = 'none'; c.style.animation = 'none';
-      setTimeout(() => {
-        html2canvas(c, { scale: 3, backgroundColor: null, useCORS: true, allowTaint: true, logging: false }).then(cv => {
-          const a = document.createElement('a');
-          a.download = 'PrismaX_' + (ans.name || 'Operator').replace(/\s+/g, '_') + '_Card.png';
-          a.href = cv.toDataURL('image/png'); a.click();
-          c.style.transform = origTransform; c.style.animation = origAnim;
-          // Then open tweet after short delay
-          setTimeout(() => {
-            const role = (ans.role || 'operator').charAt(0).toUpperCase() + (ans.role || 'operator').slice(1);
-            const score = document.getElementById('ct-score').textContent || '0';
-            const name = ans.name || 'an Operator';
-            const text = 'I just got my PrismaX Operator Identity Card ' + String.fromCodePoint(0x1F916) + String.fromCodePoint(0x26A1) + '\n\nName: ' + name + '\nRole: ' + role + '\nScore: ' + score + ' out of 100\n\nGo check yours out too\nMade by @ayushgautam174 ' + String.fromCodePoint(0x1F525) + '\n\n@prismaXai';
-            const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
-            window.open(url, '_blank');
-          }, 600);
-        });
-      }, 200);
+      generateCardImage(dataUrl => {
+        const a = document.createElement('a'); a.download = `PrismaX_${(ans.name || 'Operator').replace(/\s+/g, '_')}_Card.png`; a.href = dataUrl; a.click();
+        setTimeout(() => {
+          const role = (ans.role || 'operator').charAt(0).toUpperCase() + (ans.role || 'operator').slice(1);
+          const score = document.getElementById('ct-score').textContent || '0';
+          const name = ans.name || 'an Operator';
+          const text = 'I just got my PrismaX Operator Identity Card ' + String.fromCodePoint(0x1F916) + String.fromCodePoint(0x26A1) + '\n\nName: ' + name + '\nRole: ' + role + '\nScore: ' + score + ' out of 100\n\nGo check yours out too\nMade by @ayushgautam174 ' + String.fromCodePoint(0x1F525) + '\n\n@prismaXai';
+          const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+          window.open(url, '_blank');
+        }, 600);
+      });
     }
     function resetQuiz() {
       playClick(440, .07); ans = {}; cq = 0; photo = null; cpGo = false; cpCtx = null;
